@@ -3,6 +3,7 @@ import './HomePage.css';
 import TitleLayout from "../../layouts/TitleLayout/TitleLayout.jsx";
 import SearchLayout from "../../layouts/SearchLayout/SearchLayout.jsx";
 import FoodCard from "../../components/FoodCard/FoodCard.jsx";
+import FooterLayout from '../../layouts/FooterLayout/FooterLayout.jsx';
 
 const mockProducts = [
     { id: 1, nome: "Banana Prata", categoria: "Fruta", quantidadeEstoque: 42, dataValidade: "2026-09-05" },
@@ -28,7 +29,7 @@ const HomePage = () => {
                 ))}
             </div>
 
-            {/* footerlayout */}
+            <FooterLayout />
         </div>
     )
 }
