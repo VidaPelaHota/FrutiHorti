@@ -24,13 +24,23 @@ export const GlobalStyle = createGlobalStyle`
 
         --white: #fff;
         --black: #1b1b1a;
+        --faded-black: #646562;
+
         --text-green: #c4d8c3;
         --solid-green: #186d37;
         --softer-green: #e4ecd2;
+        --modern-green: #34a283;
+        --most-soft-green: #ebf4eb;
         --background-green: #fafbf2;
+
+        --text-gray: #8d8e8b;
         --soft-gray: #9ca3af;
+        --most-soft-gray: #f1f2ef;
         --heavy-gray: #3c3c3a;
         --border-gray: #e5e7eb;
+
+        --text-yellow: #b7791f;
+        --soft-yellow: #fdf1d6;
     }
 `;
 

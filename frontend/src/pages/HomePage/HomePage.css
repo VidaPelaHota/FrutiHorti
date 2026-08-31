@@ -1,0 +1,15 @@
+.homepageApp {
+    background-color: var(--background-green);
+}
+
+.productGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 120rem;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}

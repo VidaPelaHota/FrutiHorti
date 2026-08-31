@@ -1,7 +1,3 @@
-.searchLayoutApp {
-    background-color: var(--background-green);
-}
-
 .searchLayoutContainer {
     display: flex;
     width: 120rem;
