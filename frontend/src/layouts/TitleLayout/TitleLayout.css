@@ -1,0 +1,20 @@
+.titleLayoutApp {
+    background-color: var(--solid-green);
+}
+
+.titleLayoutContainer {
+    display: flex;
+    width: 120rem;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+
+    justify-content: space-between;
+    align-items: center;
+}
+
+.titleLayoutTexts {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 1.4rem;
+}

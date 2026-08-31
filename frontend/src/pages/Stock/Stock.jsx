@@ -1,11 +1,11 @@
 import './Stock.css';
 
-import { Title } from "../../styles/globalStyles";
+import { Text } from "../../styles/globalStyles";
 
 const Stock = () => {
     return (
         <div className="stockApp">
-            <Title>Stock</Title>
+            <Text>Stock</Text>
         </div>
     )
 }

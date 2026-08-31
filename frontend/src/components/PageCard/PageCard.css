@@ -1,0 +1,22 @@
+.pageCard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+
+    font-size: 1.2rem;
+    text-decoration: none;
+    color: var(--heavy-gray);
+
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.pageCard:hover {
+    background-color: var(--softer-green);
+}
+
+.pageCard.active {
+    background-color: var(--softer-green);
+}

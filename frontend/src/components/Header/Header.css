@@ -1,0 +1,30 @@
+.headerContainer {
+    display: flex;
+    width: 120rem;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+
+    justify-content: space-between;
+    align-items: center;
+}
+
+.headerTitle {
+    display: flex;
+    gap: .8rem;
+    align-items: center;
+}
+
+.headerTitle > img {
+    width: 2.6rem;
+    height: 2.6rem;
+}
+
+.headerPages {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+
+    padding: 0.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-gray);
+}

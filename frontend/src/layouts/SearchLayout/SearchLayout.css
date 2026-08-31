@@ -1,0 +1,20 @@
+.searchLayoutApp {
+    background-color: var(--background-green);
+}
+
+.searchLayoutContainer {
+    display: flex;
+    width: 120rem;
+    margin: 0 auto;
+    padding: 2rem 2rem;
+
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.searchLayoutFilters {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}

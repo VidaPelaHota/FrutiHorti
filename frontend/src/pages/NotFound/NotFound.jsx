@@ -1,11 +1,11 @@
 import './NotFound.css';
 
-import { Title } from "../../styles/globalStyles";
+import { Text } from "../../styles/globalStyles";
 
 const NotFound = () => {
     return (
         <div className="notfoundApp">
-            <Title>NotFound</Title>
+            <Text>NotFound</Text>
         </div>
     )
 }
