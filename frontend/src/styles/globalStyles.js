@@ -28,6 +28,7 @@ export const GlobalStyle = createGlobalStyle`
 
         --text-green: #c4d8c3;
         --solid-green: #186d37;
+        --easier-solid-green: #188540;
         --softer-green: #e4ecd2;
         --modern-green: #34a283;
         --most-soft-green: #ebf4eb;
@@ -41,6 +42,9 @@ export const GlobalStyle = createGlobalStyle`
 
         --text-yellow: #b7791f;
         --soft-yellow: #fdf1d6;
+
+        --solid-red: #c0392b;
+        --soft-red: #fbdcdc;
     }
 `;
 

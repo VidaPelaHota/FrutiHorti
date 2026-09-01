@@ -1,0 +1,22 @@
+.stockTitle {
+    display: flex;
+    width: 120rem;
+    margin: 0 auto;
+    padding: 2rem 2rem;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.titleText {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.stockCards {
+    display: flex;
+    width: 120rem;
+    margin: 0 auto;
+    padding: 0rem 2rem;
+    gap: 1.6rem;
+}

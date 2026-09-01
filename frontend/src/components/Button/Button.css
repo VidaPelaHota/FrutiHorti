@@ -1,0 +1,25 @@
+.button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+
+    padding: .8rem 1.4rem;
+    border: none;
+    border-radius: 1.1rem;
+    background-color: var(--solid-green);
+    
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--white);
+    cursor: pointer;
+
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.button:hover {
+    background-color: var(--easier-solid-green);
+}
+
+.button:active {
+    transform: scale(0.97);
+}

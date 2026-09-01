@@ -1,0 +1,59 @@
+.infoCardApp {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+
+    padding: 1.6rem 1.6rem;
+    border: 1px solid var(--border-gray);
+    border-radius: 1.6rem;
+    background-color: var(--white);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+
+    flex: 1;
+}
+
+.infoCardIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.infoCardContent {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.infoCardTitle {
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-gray);
+}
+
+.infoCardValue {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--black);
+}
+
+/* Variantes de cor */
+.infoCardApp.default .infoCardIcon {
+    background-color: var(--softer-green);
+    color: var(--solid-green);
+}
+
+.infoCardApp.warning .infoCardIcon {
+    background-color: var(--soft-yellow);
+}
+
+.infoCardApp.danger .infoCardIcon {
+    background-color: var(--soft-red);
+    color: var(--solid-red);
+}
