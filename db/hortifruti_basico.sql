@@ -1,65 +1,118 @@
--- Modelo SQL simples para um hortifrúti de bairro
--- Contexto: produtos perecíveis e alta rotatividade
+-- Modelo MySQL para o sistema de hortifrúti
+-- Tabelas principais: categoria, lote, status, produto, estoque, usuários e administradores
+
+DROP TABLE IF EXISTS admins;
+DROP TABLE IF EXISTS estoque;
+DROP TABLE IF EXISTS produtos;
+DROP TABLE IF EXISTS lotes;
+DROP TABLE IF EXISTS categorias;
+DROP TABLE IF EXISTS status;
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    senha_hash VARCHAR(255) NOT NULL,
+    telefone VARCHAR(20),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    cargo VARCHAR(50) NOT NULL DEFAULT 'admin',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_admin_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
 CREATE TABLE categorias (
-    id INTEGER PRIMARY KEY,
-    nome VARCHAR(50) NOT NULL UNIQUE,
-    descricao VARCHAR(120),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(80) NOT NULL UNIQUE,
+    descricao VARCHAR(255),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE lotes (
-    id INTEGER PRIMARY KEY,
-    codigo_lote VARCHAR(30) NOT NULL UNIQUE,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo_lote VARCHAR(50) NOT NULL UNIQUE,
     data_entrada DATE NOT NULL,
     data_validade DATE NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE status (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(50) NOT NULL UNIQUE,
+    descricao VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE produtos (
-    id INTEGER PRIMARY KEY,
-    nome VARCHAR(100) NOT NULL,
-    categoria_id INTEGER NOT NULL,
-    lote_id INTEGER NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    categoria_id INT NOT NULL,
+    lote_id INT NOT NULL,
+    status_id INT NOT NULL DEFAULT 1,
     preco_unitario DECIMAL(10,2) NOT NULL,
-    quantidade_estoque INTEGER NOT NULL,
-    perecivel BOOLEAN NOT NULL DEFAULT TRUE,
+    perecivel TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (categoria_id) REFERENCES categorias(id),
-    FOREIGN KEY (lote_id) REFERENCES lotes(id)
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_produto_categoria
+        FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_produto_lote
+        FOREIGN KEY (lote_id) REFERENCES lotes(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    CONSTRAINT fk_produto_status
+        FOREIGN KEY (status_id) REFERENCES status(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
 );
 
-CREATE TABLE vendas (
-    id INTEGER PRIMARY KEY,
-    data_venda DATE NOT NULL,
-    produto_id INTEGER NOT NULL,
-    quantidade INTEGER NOT NULL,
-    valor_total DECIMAL(10,2) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (produto_id) REFERENCES produtos(id)
+CREATE TABLE estoque (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    produto_id INT NOT NULL UNIQUE,
+    quantidade INT NOT NULL DEFAULT 0,
+    quantidade_minima INT NOT NULL DEFAULT 0,
+    localizacao VARCHAR(100),
+    ultima_atualizacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_estoque_produto
+        FOREIGN KEY (produto_id) REFERENCES produtos(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
--- Dados iniciais de exemplo
-INSERT INTO categorias (id, nome, descricao) VALUES
-(1, 'Fruta', 'Frutas frescas de alta saída'),
-(2, 'Legume', 'Legumes para consumo diário'),
-(3, 'Verdura', 'Verduras folhosas perecíveis');
+INSERT INTO status (id, nome, descricao) VALUES
+(1, 'ativo', 'Produto disponível para venda'),
+(2, 'inativo', 'Produto temporariamente indisponível'),
+(3, 'esgotado', 'Produto sem quantidade em estoque'),
+(4, 'vencido', 'Produto fora da validade');
 
-INSERT INTO lotes (id, codigo_lote, data_entrada, data_validade) VALUES
-(1, 'L20260821-01', '2026-08-21', '2026-08-28'),
-(2, 'L20260821-02', '2026-08-21', '2026-08-25'),
-(3, 'L20260821-03', '2026-08-21', '2026-08-23');
+INSERT INTO categorias (nome, descricao) VALUES
+('Fruta', 'Frutas frescas de alta saída'),
+('Legume', 'Legumes para consumo diário'),
+('Verdura', 'Verduras folhosas perecíveis');
 
-INSERT INTO produtos (id, nome, categoria_id, lote_id, preco_unitario, quantidade_estoque, perecivel) VALUES
-(1, 'Banana Prata', 1, 1, 6.50, 120, TRUE),
-(2, 'Tomate', 2, 2, 8.90, 90, TRUE),
-(3, 'Alface Crespa', 3, 3, 3.50, 60, TRUE);
+INSERT INTO lotes (codigo_lote, data_entrada, data_validade) VALUES
+('L20260821-01', '2026-08-21', '2026-08-28'),
+('L20260821-02', '2026-08-21', '2026-08-25'),
+('L20260821-03', '2026-08-21', '2026-08-23');
 
-INSERT INTO vendas (id, data_venda, produto_id, quantidade, valor_total) VALUES
-(1, '2026-08-21', 1, 12, 78.00),
-(2, '2026-08-21', 2, 8, 71.20),
-(3, '2026-08-21', 3, 10, 35.00);
+INSERT INTO produtos (nome, categoria_id, lote_id, status_id, preco_unitario, perecivel) VALUES
+('Banana Prata', 1, 1, 1, 6.50, 1),
+('Tomate', 2, 2, 1, 8.90, 1),
+('Alface Crespa', 3, 3, 1, 3.50, 1);
+
+INSERT INTO estoque (produto_id, quantidade, quantidade_minima, localizacao) VALUES
+(1, 120, 20, 'Prateleira A1'),
+(2, 90, 15, 'Prateleira B2'),
+(3, 60, 10, 'Prateleira C3');

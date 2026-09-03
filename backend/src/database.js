@@ -1,123 +1,132 @@
-const fs = require('fs');
-const path = require('path');
-const { DatabaseSync } = require('node:sqlite');
+const mysql = require('mysql2/promise');
 
-const dbDir = path.join(__dirname, '..', 'data');
-const dbPath = path.join(dbDir, 'hortifruti.db');
-const schemaPath = path.join(__dirname, '..', '..', 'db', 'hortifruti_basico.sql');
-
-let db;
-
-function initDatabase() {
-  if (db) {
-    return db;
-  }
-
-  fs.mkdirSync(dbDir, { recursive: true });
-  db = new DatabaseSync(dbPath);
-  db.exec('PRAGMA foreign_keys = ON;');
-
-  const tableExists = db
-    .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'produtos'")
-    .get();
-
-  if (!tableExists) {
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    db.exec(schemaSql);
-  }
-
-  return db;
+function getDbConfig() {
+  return {
+    client: 'mysql',
+    connection: {
+      host: process.env.DB_HOST || '127.0.0.1',
+      port: Number(process.env.DB_PORT || 3306),
+      database: process.env.DB_DATABASE || 'hortifruti',
+      user: process.env.DB_USERNAME || 'root',
+      password: process.env.DB_PASSWORD || '',
+      charset: process.env.DB_COLLATION || 'utf8mb4_general_ci',
+      multipleStatements: true,
+    },
+  };
 }
 
-function listProducts() {
-  const database = initDatabase();
+let pool;
 
-  return database
-    .prepare(
-      `
-      SELECT
-        p.id,
-        p.nome,
-        c.nome AS categoria,
-        p.preco_unitario,
-        p.quantidade_estoque,
-        l.codigo_lote,
-        l.data_validade
-      FROM produtos p
-      INNER JOIN categorias c ON c.id = p.categoria_id
-      INNER JOIN lotes l ON l.id = p.lote_id
-      ORDER BY p.id ASC
-      `
-    )
-    .all();
+async function initDatabase() {
+  if (!pool) {
+    const config = getDbConfig();
+    pool = mysql.createPool(config.connection);
+
+    const connection = await pool.getConnection();
+    try {
+      await connection.query('SELECT 1');
+    } finally {
+      connection.release();
+    }
+  }
+
+  return pool;
 }
 
-function ensureCategory(database, categoryName) {
+async function listProducts() {
+  const database = await initDatabase();
+
+  const [rows] = await database.execute(`
+    SELECT
+      p.id,
+      p.nome,
+      c.nome AS categoria,
+      p.preco_unitario,
+      p.quantidade_estoque,
+      l.codigo_lote,
+      l.data_validade
+    FROM produtos p
+    INNER JOIN categorias c ON c.id = p.categoria_id
+    INNER JOIN lotes l ON l.id = p.lote_id
+    ORDER BY p.id ASC
+  `);
+
+  return rows;
+}
+
+async function ensureCategory(database, categoryName) {
   const normalized = String(categoryName).trim();
-  database
-    .prepare('INSERT OR IGNORE INTO categorias (nome, descricao) VALUES (?, ?)')
-    .run(normalized, `Categoria ${normalized}`);
 
-  const category = database
-    .prepare('SELECT id FROM categorias WHERE nome = ?')
-    .get(normalized);
+  const [rows] = await database.execute(
+    'SELECT id FROM categorias WHERE nome = ? LIMIT 1',
+    [normalized]
+  );
 
-  return category.id;
+  if (rows.length > 0) {
+    return rows[0].id;
+  }
+
+  const [result] = await database.execute(
+    'INSERT INTO categorias (nome, descricao) VALUES (?, ?)',
+    [normalized, `Categoria ${normalized}`]
+  );
+
+  return result.insertId;
 }
 
-function ensureLote(database, code, validade, entrada) {
+async function ensureLote(database, code, validade, entrada) {
   const normalizedCode = String(code).trim();
   const entradaDate = entrada || new Date().toISOString().slice(0, 10);
 
-  database
-    .prepare(
-      'INSERT OR IGNORE INTO lotes (codigo_lote, data_entrada, data_validade) VALUES (?, ?, ?)'
-    )
-    .run(normalizedCode, entradaDate, validade);
+  const [rows] = await database.execute(
+    'SELECT id FROM lotes WHERE codigo_lote = ? LIMIT 1',
+    [normalizedCode]
+  );
 
-  const lote = database
-    .prepare('SELECT id FROM lotes WHERE codigo_lote = ?')
-    .get(normalizedCode);
-
-  if (lote) {
-    database
-      .prepare('UPDATE lotes SET data_validade = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-      .run(validade, lote.id);
-    return lote.id;
+  if (rows.length > 0) {
+    const loteId = rows[0].id;
+    await database.execute(
+      'UPDATE lotes SET data_validade = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [validade, loteId]
+    );
+    return loteId;
   }
 
-  throw new Error('Failed to ensure lote');
+  const [result] = await database.execute(
+    'INSERT INTO lotes (codigo_lote, data_entrada, data_validade) VALUES (?, ?, ?)',
+    [normalizedCode, entradaDate, validade]
+  );
+
+  return result.insertId;
 }
 
-function createProduct(payload) {
-  const database = initDatabase();
-  const categoryId = ensureCategory(database, payload.categoria);
-  const loteId = ensureLote(
+async function createProduct(payload) {
+  const database = await initDatabase();
+  const categoryId = await ensureCategory(database, payload.categoria);
+  const loteId = await ensureLote(
     database,
     payload.codigo_lote,
     payload.data_validade,
     payload.data_entrada
   );
 
-  const result = database
-    .prepare(
-      `
+  const [result] = await database.execute(
+    `
       INSERT INTO produtos (nome, categoria_id, lote_id, preco_unitario, quantidade_estoque, perecivel)
       VALUES (?, ?, ?, ?, ?, ?)
-      `
-    )
-    .run(
+    `,
+    [
       payload.nome,
       categoryId,
       loteId,
       payload.preco_unitario,
       payload.quantidade_estoque,
-      payload.perecivel ? 1 : 0
-    );
+      payload.perecivel ? 1 : 0,
+    ]
+  );
 
-  return database
-    .prepare(
-      `
+  const [rows] = await database.execute(
+    `
       SELECT
         p.id,
         p.nome,
@@ -130,32 +139,31 @@ function createProduct(payload) {
       INNER JOIN categorias c ON c.id = p.categoria_id
       INNER JOIN lotes l ON l.id = p.lote_id
       WHERE p.id = ?
-      `
-    )
-    .get(result.lastInsertRowid);
+    `,
+    [result.insertId]
+  );
+
+  return rows[0];
 }
 
-function updateProduct(productId, payload) {
-  const database = initDatabase();
-  const existing = database
-    .prepare('SELECT id FROM produtos WHERE id = ?')
-    .get(productId);
+async function updateProduct(productId, payload) {
+  const database = await initDatabase();
+  const [existingRows] = await database.execute('SELECT id FROM produtos WHERE id = ? LIMIT 1', [productId]);
 
-  if (!existing) {
+  if (existingRows.length === 0) {
     return null;
   }
 
-  const categoryId = ensureCategory(database, payload.categoria);
-  const loteId = ensureLote(
+  const categoryId = await ensureCategory(database, payload.categoria);
+  const loteId = await ensureLote(
     database,
     payload.codigo_lote,
     payload.data_validade,
     payload.data_entrada
   );
 
-  database
-    .prepare(
-      `
+  await database.execute(
+    `
       UPDATE produtos
       SET
         nome = ?,
@@ -166,21 +174,20 @@ function updateProduct(productId, payload) {
         perecivel = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-      `
-    )
-    .run(
+    `,
+    [
       payload.nome,
       categoryId,
       loteId,
       payload.preco_unitario,
       payload.quantidade_estoque,
       payload.perecivel ? 1 : 0,
-      productId
-    );
+      productId,
+    ]
+  );
 
-  return database
-    .prepare(
-      `
+  const [rows] = await database.execute(
+    `
       SELECT
         p.id,
         p.nome,
@@ -193,27 +200,30 @@ function updateProduct(productId, payload) {
       INNER JOIN categorias c ON c.id = p.categoria_id
       INNER JOIN lotes l ON l.id = p.lote_id
       WHERE p.id = ?
-      `
-    )
-    .get(productId);
+    `,
+    [productId]
+  );
+
+  return rows[0];
 }
 
-function deleteProduct(productId) {
-  const database = initDatabase();
-  database.exec('BEGIN TRANSACTION');
+async function deleteProduct(productId) {
+  const database = await initDatabase();
+  await database.execute('START TRANSACTION');
 
   try {
-    database.prepare('DELETE FROM vendas WHERE produto_id = ?').run(productId);
-    const result = database.prepare('DELETE FROM produtos WHERE id = ?').run(productId);
-    database.exec('COMMIT');
-    return result.changes > 0;
+    await database.execute('DELETE FROM vendas WHERE produto_id = ?', [productId]);
+    const [result] = await database.execute('DELETE FROM produtos WHERE id = ?', [productId]);
+    await database.execute('COMMIT');
+    return result.affectedRows > 0;
   } catch (error) {
-    database.exec('ROLLBACK');
+    await database.execute('ROLLBACK');
     throw error;
   }
 }
 
 module.exports = {
+  getDbConfig,
   initDatabase,
   listProducts,
   createProduct,
