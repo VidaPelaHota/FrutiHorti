@@ -16,7 +16,9 @@
 ## 3. Critérios de qualidade: DoR e DoD
 
 ### Definition of Ready (DoR)
+
 Uma tarefa só pode entrar em desenvolvimento quando:
+
 - possuir descrição clara;
 - ter objetivo definido;
 - ter critérios de aceitação objetivos;
@@ -27,7 +29,9 @@ Uma tarefa só pode entrar em desenvolvimento quando:
 Se algum critério não for atendido, a tarefa deve permanecer no backlog.
 
 ### Definition of Done (DoD)
+
 Uma tarefa só é considerada concluída quando:
+
 - o código foi implementado conforme os requisitos;
 - o código segue os padrões da equipe;
 - a implementação foi revisada por pelo menos um outro integrante via Pull Request;
@@ -51,6 +55,7 @@ Uma tarefa só é considerada concluída quando:
 ## 5. Registro e resolução de bugs
 
 Todo bug identificado durante o desenvolvimento ou testes deve ser registrado no backlog com:
+
 - descrição do problema;
 - passos para reprodução;
 - comportamento esperado;
@@ -58,6 +63,7 @@ Todo bug identificado durante o desenvolvimento ou testes deve ser registrado no
 - severidade.
 
 ### Severidades
+
 - Crítico: compromete regra crítica, segurança ou integridade dos dados; bloqueia a entrega.
 - Alto: compromete funcionalidade importante; deve ser corrigido antes da entrega.
 - Médio: afeta parcialmente uma funcionalidade, sem impedir uso geral.
@@ -68,11 +74,13 @@ Bugs críticos e altos têm prioridade sobre novas funcionalidades.
 ## 6. Guia de estilo e padrões de código
 
 ### Tecnologias
+
 - Frontend: React e JavaScript
 - Backend: Node.js
 - Banco de dados: MySQL
 
 ### Nomenclatura
+
 - Variáveis e funções: camelCase
 - Classes e componentes React: PascalCase
 - Constantes fixas: UPPER_SNAKE_CASE, quando aplicável
@@ -82,6 +90,7 @@ Bugs críticos e altos têm prioridade sobre novas funcionalidades.
 - Manter nomenclatura consistente entre frontend, backend e banco de dados
 
 ### Boas práticas
+
 - Evitar duplicação de código; criar funções, componentes e módulos reutilizáveis.
 - Cada função deve ter responsabilidade bem definida.
 - Funções com mais de 40 linhas devem ser avaliadas para refatoração.
@@ -95,6 +104,7 @@ Bugs críticos e altos têm prioridade sobre novas funcionalidades.
 ## 7. Fluxo de versionamento e pipeline de CI/CD
 
 ### Estratégia de branches
+
 - A branch main é a versão estável integrada do projeto.
 - Não desenvolver diretamente na main.
 - Novas funcionalidades: feature/nome-da-funcionalidade
@@ -103,7 +113,9 @@ Bugs críticos e altos têm prioridade sobre novas funcionalidades.
 - Todo PR precisa de aprovação de pelo menos um outro integrante.
 
 ### Commits
+
 Usar Conventional Commits, com tipos como:
+
 - feat: nova funcionalidade
 - fix: correção de bug
 - refactor: alteração interna sem mudança de comportamento
@@ -112,6 +124,7 @@ Usar Conventional Commits, com tipos como:
 - chore: manutenção
 
 Exemplos:
+
 - feat: add product registration
 - fix: prevent sale of expired products
 - refactor: separate stock validation
@@ -119,6 +132,7 @@ Exemplos:
 - docs: update project setup
 
 ### Verificação automática e lint
+
 - ESLint será usado para padronização e análise estática do código JavaScript/React.
 - O pipeline de CI/CD deve realizar:
   - instalação das dependências;
