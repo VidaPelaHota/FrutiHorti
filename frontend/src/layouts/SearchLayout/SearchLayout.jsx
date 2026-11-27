@@ -1,64 +1,27 @@
-import { useState } from "react";
 import './SearchLayout.css';
 
 import SearchBar from "../../components/SearchBar/SearchBar.jsx";
 import Filter from "../../components/Filter/Filter.jsx";
+import { ALL_CATEGORIES, PRODUCT_CATEGORIES } from "../../constants/catalog.js";
 
-const DEFAULT_CATEGORIES = ["Fruta", "Legume", "Verdura", "Grão"];
+// Controlled search box and category filter; the page owns the state (see useProductList).
+const SearchLayout = ({ searchValue, onSearchChange, activeCategory, onCategoryChange, categories = PRODUCT_CATEGORIES }) => (
+    <div className="searchLayoutApp">
+        <div className="searchLayoutContainer">
+            <SearchBar value={searchValue} onChange={(event) => onSearchChange(event.target.value)} />
 
-const SearchLayout = ({
-    searchValue,
-    onSearchChange,
-    activeCategory,
-    onCategoryChange,
-    categories = DEFAULT_CATEGORIES,
-}) => {
-    const [internalSearch, setInternalSearch] = useState("");
-    const [internalCategory, setInternalCategory] = useState("Todas");
-
-    const search = searchValue ?? internalSearch;
-    const category = activeCategory ?? internalCategory;
-
-    const handleSearchChange = (event) => {
-        if (onSearchChange) {
-            onSearchChange(event.target.value);
-        } else {
-            setInternalSearch(event.target.value);
-        }
-    };
-
-    const handleCategoryChange = (nextCategory) => {
-        if (onCategoryChange) {
-            onCategoryChange(nextCategory);
-        } else {
-            setInternalCategory(nextCategory);
-        }
-    };
-
-    return (
-        <div className="searchLayoutApp">
-            <div className="searchLayoutContainer">
-                <SearchBar value={search} onChange={handleSearchChange} />
-
-                <div className="searchLayoutFilters">
+            <div className="searchLayoutFilters">
+                {[ALL_CATEGORIES, ...categories].map((category) => (
                     <Filter
-                        label="Todas"
-                        isActive={category === "Todas"}
-                        onClick={() => handleCategoryChange("Todas")}
+                        key={category}
+                        label={category}
+                        isActive={activeCategory === category}
+                        onClick={() => onCategoryChange(category)}
                     />
-
-                    {categories.map((cat) => (
-                        <Filter
-                            key={cat}
-                            label={cat}
-                            isActive={category === cat}
-                            onClick={() => handleCategoryChange(cat)}
-                        />
-                    ))}
-                </div>
+                ))}
             </div>
         </div>
-    )
-}
+    </div>
+);
 
 export default SearchLayout;

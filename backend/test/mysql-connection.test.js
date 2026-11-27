@@ -13,3 +13,15 @@ test('database config reads MySQL settings from environment', () => {
   assert.equal(config.connection.user, 'root');
   assert.equal(config.connection.password, '');
 });
+
+test('database config returns DATE columns as strings and does not allow multiple statements', () => {
+  const config = db.getDbConfig();
+
+  assert.deepEqual(config.connection.dateStrings, ['DATE']);
+  assert.equal(config.connection.multipleStatements, undefined);
+});
+
+test('database config exchanges TIMESTAMP values in UTC, so movement dates never shift by the server time zone', () => {
+  const config = db.getDbConfig();
+  assert.equal(config.connection.timezone, 'Z');
+});

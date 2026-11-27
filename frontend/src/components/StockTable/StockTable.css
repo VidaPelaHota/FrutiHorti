@@ -128,3 +128,68 @@
     color: var(--text-gray);
     font-size: 1.2rem;
 }
+
+.stockRowError {
+    margin: 0.6rem 0 0;
+    max-width: 32rem;
+    font-size: 1.1rem;
+    color: var(--solid-red);
+}
+
+.stockRowInactive {
+    opacity: 0.6;
+}
+
+.stockRowExpiredStock {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--solid-red);
+}
+
+.stockRowExpiration.inactive {
+    background-color: var(--border-gray);
+    color: var(--text-gray);
+}
+
+.stockRowActionButton.lotEntry {
+    background-color: var(--solid-green);
+    opacity: 0.85;
+}
+
+.stockRowActionButton.deactivate {
+    background-color: var(--text-gray);
+}
+
+.stockRowActionButton.activate {
+    background-color: var(--solid-green);
+}
+
+/* N2: preço atual com desconto automático */
+.stockRowPrice {
+    display: block;
+    font-weight: 600;
+    color: var(--black);
+}
+
+.stockRowPrice.discounted {
+    color: var(--text-yellow);
+}
+
+.stockRowPriceOriginal {
+    display: block;
+    font-size: 1rem;
+    color: var(--text-gray);
+    text-decoration: line-through;
+}
+
+.stockRowDiscountBadge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background-color: var(--soft-yellow);
+    color: var(--text-yellow);
+    font-weight: 700;
+    text-decoration: none;
+}

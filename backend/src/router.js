@@ -1,6 +1,8 @@
 const productHandlers = require('./handlers/products');
 const stockHandlers = require('./handlers/stock');
+const movementHandlers = require('./handlers/movements');
 const miscHandlers = require('./handlers/misc');
+const reportHandlers = require('./handlers/reports');
 
 const routes = [
   { method: 'GET', pattern: /^\/health$/, handler: miscHandlers.health },
@@ -11,11 +13,15 @@ const routes = [
   { method: 'GET', pattern: /^\/products\/(\d+)$/, handler: productHandlers.getProduct },
   { method: 'PUT', pattern: /^\/products\/(\d+)$/, handler: productHandlers.updateProduct },
   { method: 'DELETE', pattern: /^\/products\/(\d+)$/, handler: productHandlers.deleteProduct },
+  { method: 'POST', pattern: /^\/products\/(\d+)\/activate$/, handler: productHandlers.activateProduct },
+  { method: 'POST', pattern: /^\/products\/(\d+)\/deactivate$/, handler: productHandlers.deactivateProduct },
 
   { method: 'GET', pattern: /^\/stock$/, handler: stockHandlers.getStockSummary },
-  { method: 'GET', pattern: /^\/products\/(\d+)\/movements$/, handler: stockHandlers.listMovements },
+  { method: 'GET', pattern: /^\/products\/(\d+)\/movements$/, handler: movementHandlers.listMovements },
   { method: 'POST', pattern: /^\/products\/(\d+)\/stock\/entries$/, handler: stockHandlers.registerStockEntry },
   { method: 'POST', pattern: /^\/products\/(\d+)\/stock\/exits$/, handler: stockHandlers.registerStockExit },
+
+  { method: 'GET', pattern: /^\/reports\/waste$/, handler: reportHandlers.getWasteReport },
 ];
 
 function findRoute(method, pathname) {

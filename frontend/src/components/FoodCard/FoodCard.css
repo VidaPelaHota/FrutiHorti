@@ -112,3 +112,50 @@
 .foodCard.expired .foodCardName {
     color: var(--text-gray);
 }
+/* N2: preço com desconto automático por validade próxima */
+.foodCardHeader {
+    gap: 0.8rem;
+}
+
+.foodCardDiscountBadge {
+    margin-left: auto;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    background-color: var(--soft-yellow);
+    color: var(--text-yellow);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.foodCardPrice {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.8rem;
+}
+
+.foodCardPriceCurrent {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--solid-green);
+}
+
+.foodCardPriceCurrent.discounted {
+    color: var(--text-yellow);
+}
+
+.foodCardPriceOriginal {
+    font-size: 1.3rem;
+    color: var(--text-gray);
+    text-decoration: line-through;
+}
+
+.foodCardPriceNote {
+    flex-basis: 100%;
+    font-size: 1.1rem;
+    color: var(--text-yellow);
+}
+
+.foodCardPrice.unavailable .foodCardPriceCurrent {
+    color: var(--text-gray);
+}
