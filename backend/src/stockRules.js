@@ -1,5 +1,6 @@
 const { BusinessRuleError, ValidationError } = require('./errors');
-const { STATUS_IDS, STATUS_NAMES, isExpired, sortLotsByExpiration } = require('./productStatus');
+const { STATUS_IDS, STATUS_NAMES, isExpired, daysUntilExpiration, sortLotsByExpiration } = require('./productStatus');
+const { getDiscountPercent } = require('./discountRules');
 
 const SALE_SUBTYPE = 'venda';
 
@@ -25,7 +26,12 @@ function allocateFefo(sortedLots, quantidade) {
 
     const taken = Math.min(Number(lot.quantidade), remaining);
     if (taken > 0) {
-      allocations.push({ lote_id: lot.lote_id, codigo_lote: lot.codigo_lote, quantidade: taken });
+      allocations.push({
+        lote_id: lot.lote_id,
+        codigo_lote: lot.codigo_lote,
+        data_validade: lot.data_validade,
+        quantidade: taken,
+      });
       remaining -= taken;
     }
   }
@@ -57,4 +63,16 @@ function planStockExit(lots, { quantidade, subtipo }, referenceDate = new Date()
   return allocateFefo(usableLots, quantidade);
 }
 
-module.exports = { SALE_SUBTYPE, assertProductCanBeSold, assertStockEntryAllowed, planStockExit };
+// N2/N3: every exit records the list price at that moment. A sale also records the automatic
+// discount of the lot it consumed; losses and adjustments are valued at the full list price.
+function priceExitAllocation(allocation, { unitPrice, subtipo }, referenceDate = new Date()) {
+  if (subtipo !== SALE_SUBTYPE) {
+    return { unitPrice: Number(unitPrice), discountPercent: 0 };
+  }
+
+  const dias = daysUntilExpiration(allocation.data_validade, referenceDate);
+  const discountPercent = getDiscountPercent(dias, isExpired(allocation.data_validade, referenceDate));
+  return { unitPrice: Number(unitPrice), discountPercent };
+}
+
+module.exports = { SALE_SUBTYPE, assertProductCanBeSold, assertStockEntryAllowed, planStockExit, priceExitAllocation };

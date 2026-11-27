@@ -22,7 +22,7 @@ function createBatch(id, expirationDate, quantity) {
 // assert that a rejected movement wrote nothing.
 function prepareStock(
   t,
-  { quantity = 10, expirationDate = '2099-01-01', batches, status = 'ativo', missing = false } = {}
+  { quantity = 10, expirationDate = '2099-01-01', batches, status = 'ativo', missing = false, unitPrice = '10.00' } = {}
 ) {
   const connection = {};
   const state = {
@@ -39,7 +39,7 @@ function prepareStock(
   t.mock.method(productRepository, 'lockProductForUpdate', async (executor, productId) => {
     assert.equal(executor, connection);
     assert.equal(productId, MOCK_PRODUCT_ID);
-    return missing ? null : { id: MOCK_PRODUCT_ID, status };
+    return missing ? null : { id: MOCK_PRODUCT_ID, status, preco_unitario: unitPrice };
   });
   t.mock.method(stockRepository, 'listProductBatchStock', async (executor, productId) => {
     assert.equal(executor, connection);
@@ -73,7 +73,7 @@ function prepareStock(
   });
   t.mock.method(productRepository, 'findProductById', async (productId, executor) => {
     assert.equal(executor, connection);
-    return { id: productId, status, quantidade_minima: 0 };
+    return { id: productId, status, quantidade_minima: 0, preco_unitario: unitPrice };
   });
   return state;
 }

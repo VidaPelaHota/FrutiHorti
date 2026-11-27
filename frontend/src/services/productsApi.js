@@ -18,6 +18,8 @@ export function mapProductFromApi(product) {
         estoqueBaixo: product.estoque_baixo,
         proximoDoVencimento: product.proximo_do_vencimento,
         quantidadeVencida: product.quantidade_vencida ?? 0,
+        percentualDesconto: Number(product.percentual_desconto ?? 0),
+        precoComDesconto: Number(product.preco_com_desconto ?? product.preco_unitario),
         lotes: (product.lotes ?? []).map(mapLotFromApi),
     };
 }
@@ -31,6 +33,8 @@ function mapLotFromApi(lot) {
         quantidade: lot.quantidade,
         diasParaVencer: lot.dias_para_vencer,
         vencido: lot.vencido,
+        percentualDesconto: Number(lot.percentual_desconto ?? 0),
+        precoComDesconto: Number(lot.preco_com_desconto ?? 0),
     };
 }
 

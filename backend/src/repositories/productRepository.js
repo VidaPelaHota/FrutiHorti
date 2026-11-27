@@ -34,7 +34,7 @@ async function findProductById(productId, connection) {
 
 async function lockProductForUpdate(connection, productId) {
   const [rows] = await connection.execute(
-    `SELECT p.id, s.nome AS status
+    `SELECT p.id, p.preco_unitario, s.nome AS status
      FROM produtos p
      INNER JOIN status s ON s.id = p.status_id
      WHERE p.id = ?

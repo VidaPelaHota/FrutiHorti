@@ -23,11 +23,62 @@ Se alguma variável obrigatória não estiver definida, o `docker compose` falha
 O `db/hortifruti_basico.sql` só roda na criação do volume e já traz o esquema atual. Um banco criado antes de uma migração precisa recebê-la manualmente, na ordem da numeração em `db/migrations/`. Faça um backup antes (`mysqldump`).
 
 - `001_stock_by_lot.sql`: estoque por lote (tabela `estoque_lote`, `lote_id` nas movimentações; remove `produtos.lote_id`). Retorno: `001_stock_by_lot.rollback.sql`, que mantém o saldo total, mas perde a divisão do saldo entre lotes.
+- `002_movement_price_and_waste_report.sql`: grava o preço de lista e o desconto aplicado em cada saída (`preco_unitario`, `percentual_desconto`) e cria o índice do relatório mensal. Saídas antigas ficam com `NULL` e o relatório usa o preço atual para elas, avisando que o valor é estimado. Retorno: `002_movement_price_and_waste_report.rollback.sql`.
 
-Exemplo com o serviço `mysql` do compose:
+A pipeline de CI aplica as migrações sobre o esquema da etapa 1 e depois os retornos, para garantir que o caminho funciona nos dois sentidos.
+
+Exemplo com o serviço `mysql` do compose (bash):
 
 ```bash
-docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < db/migrations/001_stock_by_lot.sql
+docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < db/migrations/002_movement_price_and_waste_report.sql
+```
+
+No PowerShell, o `<` não funciona; use `Get-Content`:
+
+```powershell
+Get-Content db\migrations\002_movement_price_and_waste_report.sql | docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'
+```
+
+### 1.3. Rotas da API
+
+Todas as rotas ficam na raiz do backend (`http://localhost:3000`), sem prefixo `/api`.
+
+| Método | Rota | Uso |
+| ------ | ---- | --- |
+| GET | `/health` | Verificação de saúde |
+| GET | `/categories` | Categorias cadastradas |
+| GET | `/products` | Vitrine (sem produtos inativos), com preço e desconto automático |
+| POST | `/products` | Cadastro com o primeiro lote |
+| GET | `/products/:id` | Detalhe com os lotes |
+| PUT | `/products/:id` | Edita nome, categoria, preço, estoque mínimo e localização. Lote, validade e quantidade retornam 400: use a entrada de estoque |
+| DELETE | `/products/:id` | Exclui; com histórico, apenas inativa |
+| POST | `/products/:id/activate` e `/deactivate` | Reativa ou inativa |
+| GET | `/stock` | Tela de estoque (inclui inativos) |
+| GET | `/products/:id/movements` | Histórico, com preço e desconto de cada saída |
+| POST | `/products/:id/stock/entries` | Entrada (`quantidade`, `codigo_lote`, `data_validade` opcionais) |
+| POST | `/products/:id/stock/exits` | Saída FEFO (`quantidade`, `subtipo`: venda, perda, ajuste, outro) |
+| GET | `/reports/waste?month=YYYY-MM` | Relatório mensal de desperdício (padrão: mês atual da loja) |
+
+### 1.4. Configuração das regras
+
+Variáveis de ambiente do backend (todas opcionais):
+
+- `STORE_TIMEZONE` (padrão `America/Sao_Paulo`): fuso usado para "hoje" e para os limites do mês do relatório.
+- `EXPIRING_SOON_DAYS` (padrão `3`): dias para o alerta de "próximo do vencimento".
+- `DISCOUNT_TIERS` (padrão `1:50,2:30,3:20`): desconto automático por dias até o vencimento, no formato `dias:percentual`. Lotes vencidos nunca recebem desconto, porque não podem ser vendidos.
+
+### 1.5. Testes
+
+```bash
+npm test                      # backend (node:test), na raiz ou em backend/
+npm --prefix frontend test    # frontend (Vitest)
+```
+
+Os testes de integração rodam contra um MySQL real com o esquema atual e ficam desligados sem `INTEGRATION_DB=1`:
+
+```bash
+cd backend
+INTEGRATION_DB=1 DB_HOST=127.0.0.1 DB_PORT=3307 DB_USERNAME=frutihorti DB_PASSWORD=... DB_DATABASE=hortifruti npm run test:integration
 ```
 
 ## 2. Organização das Branches

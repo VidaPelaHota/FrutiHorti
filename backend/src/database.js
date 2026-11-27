@@ -12,9 +12,13 @@ function getDbConfig() {
       charset: process.env.DB_COLLATION || 'utf8mb4_general_ci',
       // DATE columns come back as 'YYYY-MM-DD' strings, so no time zone shifts the day.
       dateStrings: ['DATE'],
+      // TIMESTAMP values are exchanged in UTC; the session time zone is set to match (see initDatabase).
+      timezone: 'Z',
     },
   };
 }
+
+const UTC_SESSION_SQL = "SET time_zone = '+00:00'";
 
 let pool;
 
@@ -22,6 +26,9 @@ async function initDatabase() {
   if (!pool) {
     const config = getDbConfig();
     pool = mysql.createPool(config.connection);
+    // Without this, a MySQL server and a Node container in different time zones would shift every
+    // TIMESTAMP (movement dates) by hours, and the monthly report would miss movements near midnight.
+    pool.on('connection', (connection) => connection.query(UTC_SESSION_SQL));
 
     const connection = await pool.getConnection();
     try {

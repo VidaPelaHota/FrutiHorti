@@ -48,7 +48,7 @@ test('a valid sale reduces the balance and records the sale subtype', async (t) 
   assert.equal(product.quantidade_estoque, 7);
   assert.deepEqual(state.movements, [{
     productId: 7, batchId: MOCK_BATCH_ID, type: 'saida', subtype: 'venda', quantity: 3,
-    previousQuantity: 10, currentQuantity: 7, reason: 'Venda',
+    previousQuantity: 10, currentQuantity: 7, unitPrice: 10, discountPercent: 0, reason: 'Venda',
   }]);
 });
 
@@ -153,4 +153,43 @@ test('stock summaries include inactive products and derive alert fields from the
   assert.equal(availableProduct.status, 'ativo');
   assert.equal(availableProduct.estoque_baixo, false);
   assert.equal(availableProduct.proximo_do_vencimento, false);
+});
+
+// Etapa 3 — N2: the automatic discount is recorded on the sale, lot by lot (FEFO).
+const { getStoreToday } = require('../src/productStatus');
+
+function storeDatePlusDays(days) {
+  const [year, month, day] = getStoreToday().split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+}
+
+test('a sale from a lot expiring in 2 days records the list price and the 30% discount', async (t) => {
+  const state = prepareStock(t, { expirationDate: storeDatePlusDays(2), unitPrice: '10.00' });
+  const product = await stockService.registerStockExit(7, { quantidade: 3, subtipo: 'venda' });
+
+  assert.equal(state.movements[0].unitPrice, 10);
+  assert.equal(state.movements[0].discountPercent, 30);
+  assert.equal(product.percentual_desconto, 30);
+  assert.equal(product.preco_com_desconto, 7);
+});
+
+test('a sale across two lots records each lot with its own discount', async (t) => {
+  const state = prepareStock(t, {
+    batches: [createBatch(1, storeDatePlusDays(1), 2), createBatch(2, storeDatePlusDays(20), 10)],
+    unitPrice: '4.00',
+  });
+  await stockService.registerStockExit(7, { quantidade: 5, subtipo: 'venda' });
+
+  assert.deepEqual(
+    state.movements.map(({ batchId, quantity, discountPercent }) => [batchId, quantity, discountPercent]),
+    [[1, 2, 50], [2, 3, 0]]
+  );
+});
+
+test('a loss records the full list price and no discount, for the waste report', async (t) => {
+  const state = prepareStock(t, { expirationDate: storeDatePlusDays(1), unitPrice: '6.50' });
+  await stockService.registerStockExit(7, { quantidade: 2, subtipo: 'perda' });
+
+  assert.equal(state.movements[0].unitPrice, 6.5);
+  assert.equal(state.movements[0].discountPercent, 0);
 });

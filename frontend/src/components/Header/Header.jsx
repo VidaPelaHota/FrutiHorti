@@ -19,6 +19,7 @@ const Header = () => {
                 <div className="headerPages">
                     <PageCard title="Vitrine" link="/" />
                     <PageCard title="Estoque" link="/stock" />
+                    <PageCard title="Desperdício" link="/waste-report" />
                 </div>
             </div>
         </div>

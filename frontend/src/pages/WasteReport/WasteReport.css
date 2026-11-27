@@ -1,0 +1,44 @@
+.wasteReportContent {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    width: 120rem;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.wasteReportSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.wasteReportMonth {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--heavy-gray);
+}
+
+.wasteReportMonth input {
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--border-gray);
+    border-radius: 0.8rem;
+    font-size: 1.3rem;
+}
+
+.wasteReportNotice {
+    padding: 1.2rem 1.6rem;
+    border-radius: 1.2rem;
+    background-color: var(--soft-red);
+    color: var(--solid-red);
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.wasteReportHint {
+    font-size: 1.2rem;
+    color: var(--text-gray);
+}

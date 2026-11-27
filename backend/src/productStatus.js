@@ -1,3 +1,5 @@
+const { getDiscountPercent, applyDiscount } = require('./discountRules');
+
 const STATUS_IDS = {
   ATIVO: 1,
   INATIVO: 2,
@@ -109,15 +111,32 @@ function deriveStatusName({ storedStatus, totalQuantity, sellableQuantity }) {
   return STATUS_NAMES[STATUS_IDS.ATIVO];
 }
 
-function describeLot(lot, referenceDate) {
+function describeLot(lot, unitPrice, referenceDate) {
+  const dias = daysUntilExpiration(lot.data_validade, referenceDate);
+  const vencido = isExpired(lot.data_validade, referenceDate);
+  const percentualDesconto = getDiscountPercent(dias, vencido);
+
   return {
     lote_id: lot.lote_id,
     codigo_lote: lot.codigo_lote,
     data_entrada: lot.data_entrada ? toDateString(lot.data_entrada) : null,
     data_validade: toDateString(lot.data_validade),
     quantidade: Number(lot.quantidade),
-    dias_para_vencer: daysUntilExpiration(lot.data_validade, referenceDate),
-    vencido: isExpired(lot.data_validade, referenceDate),
+    dias_para_vencer: dias,
+    vencido,
+    percentual_desconto: percentualDesconto,
+    preco_com_desconto: applyDiscount(unitPrice, percentualDesconto),
+  };
+}
+
+// N2: the price shown is the price of the next unit sold. Sales consume lots in FEFO order, so it
+// is the reference lot's discounted price. Products that cannot be sold get no discount.
+function describePrice(unitPrice, referenceLot, status) {
+  const sellable = status === STATUS_NAMES[STATUS_IDS.ATIVO] && referenceLot && !referenceLot.vencido;
+  const percentualDesconto = sellable ? referenceLot.percentual_desconto : 0;
+  return {
+    percentual_desconto: percentualDesconto,
+    preco_com_desconto: applyDiscount(unitPrice, percentualDesconto),
   };
 }
 
@@ -129,11 +148,17 @@ function sumQuantities(lots) {
 // depends on a stock movement. codigo_lote/data_validade/data_entrada describe the reference lot and
 // keep the API contract used before stock by lot.
 function describeProduct(product, lots, referenceDate = new Date()) {
-  const describedLots = sortLotsByExpiration(lots).map((lot) => describeLot(lot, referenceDate));
+  const unitPrice = Number(product.preco_unitario || 0);
+  const describedLots = sortLotsByExpiration(lots).map((lot) => describeLot(lot, unitPrice, referenceDate));
   const totalQuantity = sumQuantities(describedLots);
   const expiredQuantity = sumQuantities(describedLots.filter((lot) => lot.vencido));
   const referenceLot = selectReferenceLot(describedLots, referenceDate);
   const dias = referenceLot ? referenceLot.dias_para_vencer : null;
+  const status = deriveStatusName({
+    storedStatus: product.status,
+    totalQuantity,
+    sellableQuantity: totalQuantity - expiredQuantity,
+  });
 
   return {
     ...product,
@@ -142,14 +167,12 @@ function describeProduct(product, lots, referenceDate = new Date()) {
     data_validade: referenceLot ? referenceLot.data_validade : null,
     quantidade_estoque: totalQuantity,
     quantidade_vencida: expiredQuantity,
-    status: deriveStatusName({
-      storedStatus: product.status,
-      totalQuantity,
-      sellableQuantity: totalQuantity - expiredQuantity,
-    }),
+    status,
     dias_para_vencer: dias,
-    proximo_do_vencimento: dias !== null && dias >= 0 && dias <= EXPIRING_SOON_DAYS,
+    // An expired lot is "vencido", never "próximo do vencimento" (it was flagged both ways on its last day).
+    proximo_do_vencimento: Boolean(referenceLot) && !referenceLot.vencido && dias <= EXPIRING_SOON_DAYS,
     estoque_baixo: totalQuantity <= Number(product.quantidade_minima || 0),
+    ...describePrice(unitPrice, referenceLot, status),
     lotes: describedLots,
   };
 }

@@ -4,7 +4,13 @@ const productService = require('./productService');
 const batchService = require('./batchService');
 const movementService = require('./movementService');
 const { NotFoundError, ValidationError } = require('../errors');
-const { SALE_SUBTYPE, assertProductCanBeSold, assertStockEntryAllowed, planStockExit } = require('../stockRules');
+const {
+  SALE_SUBTYPE,
+  assertProductCanBeSold,
+  assertStockEntryAllowed,
+  planStockExit,
+  priceExitAllocation,
+} = require('../stockRules');
 
 function sumBatchQuantities(batches) {
   return batches.reduce((total, batch) => total + Number(batch.quantidade), 0);
@@ -95,6 +101,7 @@ async function registerStockExit(productId, { quantidade: quantity, motivo: reas
         quantity: allocation.quantidade,
         previousQuantity: runningQuantity,
         currentQuantity: runningQuantity - allocation.quantidade,
+        ...priceExitAllocation(allocation, { unitPrice: product.preco_unitario, subtipo: subtype }),
         reason,
       });
       runningQuantity -= allocation.quantidade;

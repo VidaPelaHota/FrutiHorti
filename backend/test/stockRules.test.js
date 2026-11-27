@@ -91,3 +91,21 @@ test('stock cannot be added to an expired lot', () => {
   assert.throws(() => assertStockEntryAllowed(lot(1, '2026-10-14', 0), NOON_IN_BRASILIA), BusinessRuleError);
   assert.doesNotThrow(() => assertStockEntryAllowed(LOT_A, NOON_IN_BRASILIA));
 });
+
+// Etapa 3 — every exit records its price; a sale records the automatic discount of the lot it consumed.
+const { priceExitAllocation } = require('../src/stockRules');
+
+test('a sale from a lot expiring tomorrow records the 50% discount', () => {
+  const priced = priceExitAllocation(lot(1, '2026-10-15', 5), { unitPrice: '8.00', subtipo: 'venda' }, NOON_IN_BRASILIA);
+  assert.deepEqual(priced, { unitPrice: 8, discountPercent: 50 });
+});
+
+test('a loss is valued at the full list price, even from a lot close to expiration', () => {
+  const priced = priceExitAllocation(lot(1, '2026-10-15', 5), { unitPrice: '8.00', subtipo: 'perda' }, NOON_IN_BRASILIA);
+  assert.deepEqual(priced, { unitPrice: 8, discountPercent: 0 });
+});
+
+test('allocations keep the lot expiration date so the exit can be priced', () => {
+  const allocations = planStockExit([lot(1, '2026-10-16', 5)], { quantidade: 2, subtipo: 'venda' }, NOON_IN_BRASILIA);
+  assert.equal(allocations[0].data_validade, '2026-10-16');
+});

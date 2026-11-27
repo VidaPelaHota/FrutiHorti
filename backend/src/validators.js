@@ -14,6 +14,10 @@ const REQUIRED_FIELDS_ON_CREATE = [
 // Lot fields are not part of an update: lots change only through stock entries.
 const REQUIRED_FIELDS_ON_UPDATE = ['nome', 'categoria', 'preco_unitario'];
 
+// Etapa 1 accepted these fields on update. They are rejected instead of silently ignored, so a client
+// that still sends them learns that the change did not happen.
+const LOT_FIELDS_NOT_UPDATABLE = ['codigo_lote', 'data_validade', 'data_entrada', 'quantidade_estoque'];
+
 function isBlank(value) {
   return value === undefined || value === null || String(value).trim() === '';
 }
@@ -60,6 +64,13 @@ function validateLotDates(payload) {
 function validateProductPayload(payload, { isUpdate = false } = {}) {
   if (!payload || typeof payload !== 'object') {
     return 'Payload é obrigatório';
+  }
+
+  if (isUpdate) {
+    const lotField = LOT_FIELDS_NOT_UPDATABLE.find((field) => payload[field] !== undefined);
+    if (lotField) {
+      return `${lotField} não pode ser alterado na edição do produto; registre uma entrada em POST /products/:id/stock/entries`;
+    }
   }
 
   const requiredFields = isUpdate ? REQUIRED_FIELDS_ON_UPDATE : REQUIRED_FIELDS_ON_CREATE;

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const mysql = require('mysql2/promise');
 const database = require('../src/database');
 
-const pool = { getConnection: async () => ({ query: async () => {}, release() {} }) };
+const pool = { on() {}, getConnection: async () => ({ query: async () => {}, release() {} }) };
 mock.method(mysql, 'createPool', () => pool);
 before(() => database.initDatabase());
 after(() => mock.restoreAll());

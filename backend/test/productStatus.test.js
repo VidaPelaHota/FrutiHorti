@@ -119,3 +119,46 @@ test('describeProduct handles a product without lots', () => {
   assert.equal(described.data_validade, null);
   assert.equal(described.dias_para_vencer, null);
 });
+
+// Etapa 3 — N2 automatic discount and the "vencido vs próximo do vencimento" fix.
+test('describeProduct applies the automatic discount of the next lot to be sold', () => {
+  const described = describeProduct({ ...product, preco_unitario: '10.00' }, [lot(1, '2026-08-04', 30)], NOON_IN_BRASILIA);
+  assert.equal(described.dias_para_vencer, 2);
+  assert.equal(described.percentual_desconto, 30);
+  assert.equal(described.preco_com_desconto, 7);
+  assert.equal(described.lotes[0].percentual_desconto, 30);
+});
+
+test('describeProduct follows FEFO: the discounted lot sells first, so its price is shown', () => {
+  const described = describeProduct(
+    { ...product, preco_unitario: '10.00' },
+    [lot(2, '2026-08-30', 20), lot(1, '2026-08-03', 5)],
+    NOON_IN_BRASILIA
+  );
+  assert.equal(described.codigo_lote, 'L1');
+  assert.equal(described.percentual_desconto, 50);
+  assert.deepEqual(described.lotes.map((item) => item.percentual_desconto), [50, 0]);
+});
+
+test('describeProduct gives no discount to lots far from expiration', () => {
+  const described = describeProduct({ ...product, preco_unitario: '10.00' }, [lot(1, '2026-08-20', 30)], NOON_IN_BRASILIA);
+  assert.equal(described.percentual_desconto, 0);
+  assert.equal(described.preco_com_desconto, 10);
+});
+
+test('describeProduct gives no discount to expired or inactive products', () => {
+  const expired = describeProduct({ ...product, preco_unitario: '10.00' }, [lot(1, '2026-08-02', 30)], NOON_IN_BRASILIA);
+  assert.equal(expired.status, 'vencido');
+  assert.equal(expired.percentual_desconto, 0);
+
+  const inactive = describeProduct({ ...product, status: 'inativo', preco_unitario: '10.00' }, [lot(1, '2026-08-03', 30)], NOON_IN_BRASILIA);
+  assert.equal(inactive.percentual_desconto, 0);
+  assert.equal(inactive.preco_com_desconto, 10);
+});
+
+test('a product whose only lot expires today is vencido and no longer "próximo do vencimento"', () => {
+  const described = describeProduct(product, [lot(1, '2026-08-02', 30)], NOON_IN_BRASILIA);
+  assert.equal(described.status, 'vencido');
+  assert.equal(described.dias_para_vencer, 0);
+  assert.equal(described.proximo_do_vencimento, false);
+});

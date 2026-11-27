@@ -30,6 +30,8 @@ services:
       DB_DATABASE: ${MYSQL_DATABASE:?MYSQL_DATABASE must be set in .env}
       DB_USERNAME: ${MYSQL_USER:?MYSQL_USER must be set in .env}
       DB_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD must be set in .env}
+      # Optional: automatic discount tiers (days:percent). Empty uses the defaults 1:50,2:30,3:20.
+      DISCOUNT_TIERS: ${DISCOUNT_TIERS:-}
     ports:
       - "3000:3000"
     depends_on:

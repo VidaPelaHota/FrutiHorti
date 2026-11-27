@@ -4,6 +4,7 @@ import App from '../App.jsx';
 import NotFound from '../pages/NotFound/NotFound.jsx';
 import HomePage from '../pages/HomePage/HomePage.jsx';
 import Stock from '../pages/Stock/Stock.jsx';
+import WasteReport from '../pages/WasteReport/WasteReport.jsx';
 
 export const router = createBrowserRouter([
 	{
@@ -18,6 +19,10 @@ export const router = createBrowserRouter([
 			{
 				path: 'stock',
 				element: <Stock />
+			},
+			{
+				path: 'waste-report',
+				element: <WasteReport />
 			}
 		]
 	}

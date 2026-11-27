@@ -58,10 +58,21 @@ test('validateProductPayload rejects a non-integer stock quantity on create', ()
   assert.match(validateProductPayload(payload), /quantidade_estoque/);
 });
 
-test('validateProductPayload does not require quantidade_estoque on update', () => {
-  const { quantidade_estoque, ...updatePayload } = validProduct;
+test('validateProductPayload does not require lot fields on update', () => {
+  const { quantidade_estoque, codigo_lote, data_validade, data_entrada, ...updatePayload } = validProduct;
   assert.equal(validateProductPayload(updatePayload, { isUpdate: true }), null);
 });
+
+// Regression found in etapa 3: etapa 1 changed the expiration date through PUT; after stock by lot the
+// fields were silently ignored (HTTP 200 with nothing changed). They are now rejected with guidance.
+for (const field of ['codigo_lote', 'data_validade', 'data_entrada', 'quantidade_estoque']) {
+  test(`validateProductPayload rejects ${field} on update instead of ignoring it`, () => {
+    const { quantidade_estoque, codigo_lote, data_validade, data_entrada, ...updatePayload } = validProduct;
+    const error = validateProductPayload({ ...updatePayload, [field]: validProduct[field] ?? '2026-09-01' }, { isUpdate: true });
+    assert.match(error, new RegExp(`${field} não pode ser alterado`));
+    assert.match(error, /stock\/entries/);
+  });
+}
 
 test('normalizeProductPayload trims strings and coerces numbers', () => {
   const normalized = normalizeProductPayload({ ...validProduct, nome: '  Maçã  ' });

@@ -74,4 +74,10 @@ function parseJsonBody(req) {
   });
 }
 
-module.exports = { CORS_HEADERS, sendJson, sendHtml, parseJsonText, parseJsonBody };
+// Query string as a plain object; repeated keys keep the last value.
+function getQueryParams(req) {
+  const url = new URL(req.url, 'http://localhost');
+  return Object.fromEntries(url.searchParams.entries());
+}
+
+module.exports = { CORS_HEADERS, sendJson, sendHtml, parseJsonText, parseJsonBody, getQueryParams };

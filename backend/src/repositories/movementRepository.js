@@ -3,8 +3,9 @@ const database = require('../database');
 async function insertMovement(connection, movement) {
   await connection.execute(
     `INSERT INTO movimentacoes_estoque
-      (produto_id, lote_id, tipo, subtipo, quantidade, quantidade_anterior, quantidade_atual, motivo)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (produto_id, lote_id, tipo, subtipo, quantidade, quantidade_anterior, quantidade_atual,
+       preco_unitario, percentual_desconto, motivo)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       movement.productId,
       movement.batchId ?? null,
@@ -13,6 +14,8 @@ async function insertMovement(connection, movement) {
       movement.quantity,
       movement.previousQuantity,
       movement.currentQuantity,
+      movement.unitPrice ?? null,
+      movement.discountPercent ?? null,
       movement.reason || null,
     ]
   );
@@ -21,8 +24,8 @@ async function insertMovement(connection, movement) {
 async function listMovements(productId, connection) {
   const executor = connection || (await database.initDatabase());
   const [rows] = await executor.execute(
-    `SELECT m.id, m.tipo, m.subtipo, m.quantidade, m.quantidade_anterior, m.quantidade_atual, m.motivo,
-            m.data_movimentacao, l.codigo_lote
+    `SELECT m.id, m.tipo, m.subtipo, m.quantidade, m.quantidade_anterior, m.quantidade_atual,
+            m.preco_unitario, m.percentual_desconto, m.motivo, m.data_movimentacao, l.codigo_lote
      FROM movimentacoes_estoque m
      LEFT JOIN lotes l ON l.id = m.lote_id
      WHERE m.produto_id = ?

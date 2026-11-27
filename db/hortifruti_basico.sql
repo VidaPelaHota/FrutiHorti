@@ -1,7 +1,10 @@
 -- Modelo MySQL para o sistema de hortifrúti
 -- Tabelas principais: categoria, lote, status, produto, estoque, estoque por lote,
 -- movimentações de estoque, usuários e administradores
--- Bancos criados antes do estoque por lote: aplicar db/migrations/001_stock_by_lot.sql
+-- Bancos criados antes desta versão: aplicar as migrações de db/migrations em ordem (001, 002, ...)
+
+-- Garante acentos corretos quando o arquivo é carregado por um cliente com outro charset padrão.
+SET NAMES utf8mb4;
 
 DROP TABLE IF EXISTS admins;
 DROP TABLE IF EXISTS movimentacoes_estoque;
@@ -122,6 +125,8 @@ CREATE TABLE movimentacoes_estoque (
     quantidade INT NOT NULL,
     quantidade_anterior INT NOT NULL,
     quantidade_atual INT NOT NULL,
+    preco_unitario DECIMAL(10,2) DEFAULT NULL COMMENT 'Preço de lista no momento da saída',
+    percentual_desconto DECIMAL(5,2) DEFAULT NULL COMMENT 'Desconto automático aplicado na venda',
     motivo VARCHAR(255),
     data_movimentacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_movimentacao_produto
@@ -132,7 +137,8 @@ CREATE TABLE movimentacoes_estoque (
         FOREIGN KEY (lote_id) REFERENCES lotes(id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
-    CONSTRAINT chk_movimentacao_quantidade CHECK (quantidade > 0)
+    CONSTRAINT chk_movimentacao_quantidade CHECK (quantidade > 0),
+    INDEX idx_movimentacao_subtipo_data (subtipo, data_movimentacao)
 );
 
 INSERT INTO status (id, nome, descricao) VALUES
